@@ -102,3 +102,15 @@ html[data-theme="night"] .history-day-heading>span,html[data-theme="night"] .his
 html[data-theme="night"] .history-task{border-color:#354c39}
 html[data-theme="night"] .history-complete{background:#304b34;border-color:#526d4b;color:#e7f0df}
 @media(max-width:520px){.history-row{gap:12px;padding:14px 12px}.history-day{padding:18px 15px}.history-day-heading{align-items:flex-start;flex-direction:column}.history-time{font-size:12px}}
+
+.capture-promise{margin:12px 0 0;color:var(--muted);font-size:12px;line-height:1.5}
+
+/* Fluid viewport layout and a single-line, responsive hero. */
+.shell{width:100%;min-height:100vh;min-height:100svh;display:flex;flex-direction:column}
+.intro h1{white-space:nowrap;font-size:clamp(28px,5.2vw,47px);letter-spacing:-1.5px}
+.intro p,.capture-promise{text-align:center}
+.capture{width:min(705px,100%)}
+.capture-promise{width:min(705px,100%);margin:14px auto 0;padding:0 12px}
+footer{margin-top:auto}
+@media(max-width:600px){.shell{padding-left:clamp(15px,5vw,24px);padding-right:clamp(15px,5vw,24px)}.intro{padding:clamp(38px,10vh,58px) 0 28px}.intro h1{font-size:clamp(26px,7.2vw,38px);letter-spacing:-1.2px}.intro p{font-size:13px}.capture{padding:22px 18px 17px}.capture textarea{min-height:120px}.capture-promise{font-size:11px}.topbar{height:72px}.top-right{gap:clamp(10px,3vw,18px)}}
+@media(min-width:601px) and (max-width:900px){.shell{padding-left:clamp(28px,6vw,50px);padding-right:clamp(28px,6vw,50px)}.intro h1{font-size:clamp(38px,5.5vw,47px)}.plan-layout{gap:20px;grid-template-columns:minmax(0,1.5fr) minmax(230px,.8fr)}}
