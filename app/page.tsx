@@ -30,24 +30,33 @@ export default function Home() {
     if(!command||loading)return;
     setLoading(true);
     type ClientCommandResult=Omit<ReturnType<typeof applyTaskCommand>,'tasks'>&{tasks:Task[]};
-    let result:ClientCommandResult;
-    try{
-      const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',command,transcript:followupTranscript||undefined,tasks,activeTaskId:currentTask?.id,history:day.commandHistory||[]})});
-      const out=await res.json() as Partial<ReturnType<typeof applyTaskCommand>>&{tasks?:Task[];response?:string;message?:string;error?:string};
-      if(!res.ok||!Array.isArray(out.tasks))throw new Error(out.error||'Planner request failed');
-      result={...out,tasks:out.tasks,response:out.response||out.message||'Plan updated'} as ClientCommandResult;
-    }catch{
+    const localResult=()=>{
       const fallback=applyTaskCommand(command,tasks,currentTask?.id,{history:day.commandHistory||[],transcript:followupTranscript||undefined});
-      result={...fallback,tasks:fallback.tasks.map(task=>({...task,id:task.id||crypto.randomUUID(),category:task.category||'Focus'}))};
-    }
-    if(todayKey()!==key){setLoading(false);return}
-    const changed=JSON.stringify(result.tasks)!==JSON.stringify(tasks);
-    const selectedId=currentTask?.id;
-    const affected=result.tasks.find(task=>!tasks.some(old=>old.id===task.id)||tasks.some(old=>old.id===task.id&&(old.title!==task.title||old.detail!==task.detail||old.done!==task.done||old.time!==task.time||old.postponed!==task.postponed)));
-    const matchedTaskId=result.matchedTaskId||(affected?.id);
-    setStore(prev=>{const d=prev[key]||{totalSeconds:0,tasks:[]};const entry:CommandHistoryEntry={text:command,transcript:followupTranscript||undefined,intent:result.intent,taskId:matchedTaskId,at:Date.now()};return {...prev,[key]:{...d,tasks:result.tasks,commandHistory:[...(d.commandHistory||[]),entry].slice(-30)}}});
-    if(changed){const affectedIndex=affected?result.tasks.findIndex(task=>task.id===affected.id):-1;const selectedIndex=result.tasks.findIndex(task=>task.id===selectedId);setActive(affected?.postponed?pickRandomIndex(result.tasks,affectedIndex):affectedIndex>=0?affectedIndex:Math.max(0,selectedIndex>=0?selectedIndex:current));setRunning(false);if(!result.needsClarification){setFollowup('');setFollowupTranscript('')}}
-    setToast(result.response);setLoading(false);setTimeout(()=>setToast(''),3000);
+      return {...fallback,tasks:fallback.tasks.map(task=>({...task,id:task.id||crypto.randomUUID(),category:task.category||'Focus'}))} as ClientCommandResult;
+    };
+    try{
+      let result:ClientCommandResult;
+      try{
+        const res=await fetch('/api/plan',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'update',command,transcript:followupTranscript||undefined,tasks,activeTaskId:currentTask?.id,history:day.commandHistory||[]})});
+        const out=await res.json() as Partial<ReturnType<typeof applyTaskCommand>>&{tasks?:Task[];response?:string;message?:string;error?:string};
+        if(!res.ok||!Array.isArray(out.tasks))throw new Error(out.error||'Planner request failed');
+        const remote={...out,tasks:out.tasks,response:out.response||out.message||'Plan updated'} as ClientCommandResult;
+        const local=localResult();
+        const remoteChanged=JSON.stringify(remote.tasks)!==JSON.stringify(tasks);
+        const localChanged=JSON.stringify(local.tasks)!==JSON.stringify(tasks);
+        result=!remoteChanged&&localChanged?local:remote;
+      }catch{result=localResult()}
+      if(todayKey()!==key)return;
+      const changed=JSON.stringify(result.tasks)!==JSON.stringify(tasks);
+      const selectedId=currentTask?.id;
+      const affected=result.tasks.find(task=>!tasks.some(old=>old.id===task.id)||tasks.some(old=>old.id===task.id&&(old.title!==task.title||old.detail!==task.detail||old.done!==task.done||old.time!==task.time||old.postponed!==task.postponed)));
+      const matchedTaskId=result.matchedTaskId||(affected?.id);
+      setStore(prev=>{const d=prev[key]||{totalSeconds:0,tasks:[]};const entry:CommandHistoryEntry={text:command,transcript:followupTranscript||undefined,intent:result.intent,taskId:matchedTaskId,at:Date.now()};return {...prev,[key]:{...d,tasks:result.tasks,commandHistory:[...(d.commandHistory||[]),entry].slice(-30)}}});
+      if(changed){const affectedIndex=affected?result.tasks.findIndex(task=>task.id===affected.id):-1;const selectedIndex=result.tasks.findIndex(task=>task.id===selectedId);setActive(affected?.postponed?pickRandomIndex(result.tasks,affectedIndex):affectedIndex>=0?affectedIndex:Math.max(0,selectedIndex>=0?selectedIndex:current));setRunning(false);if(!result.needsClarification){setFollowup('');setFollowupTranscript('')}}
+      setToast(result.response);window.setTimeout(()=>setToast(''),3000);
+    }catch{
+      setToast('I couldn’t apply that just now. Your message is still here; please try again.');window.setTimeout(()=>setToast(''),4000);
+    }finally{setLoading(false)}
   };
   const history=useMemo(()=>Object.entries({...store,[key]:store[key]||{tasks:[],totalSeconds:0}}).filter(([date,data])=>date===key||data.tasks.length>0).sort(([a],[b])=>b.localeCompare(a)).slice(0,21),[store,key]);
   const selectedHistory=historyDate?(historyDate===key?day:store[historyDate]):undefined;

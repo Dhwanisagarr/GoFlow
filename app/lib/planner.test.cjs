@@ -121,3 +121,18 @@ test('conversation references complete and reschedule the active item', () => {
   assert.equal(moved.intent, 'RESCHEDULE');
   assert.equal(moved.tasks[0].time, 'Evening');
 });
+
+test('consecutive edit, add, and delete instructions use the latest task state', () => {
+  let current = [task('market', 'Go to fish bowl')];
+
+  const corrected = interpretTaskCommand('Go to fish market', current, { activeTaskId: 'market' });
+  assert.equal(corrected.tasks[0].title, 'Go to fish market');
+  current = corrected.tasks;
+
+  const added = interpretTaskCommand('Add fold my clothes', current, { activeTaskId: 'market' });
+  assert.deepEqual(added.tasks.map(item => item.title), ['Go to fish market', 'Fold my clothes']);
+  current = added.tasks;
+
+  const deleted = interpretTaskCommand('Delete fold my clothes', current, { activeTaskId: 'market' });
+  assert.deepEqual(deleted.tasks.map(item => item.title), ['Go to fish market']);
+});
