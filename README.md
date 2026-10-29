@@ -1,4 +1,4 @@
-# One Thing
+# Go with the flow
 
 A gentle daily planning app: capture everything on your mind, turn it into small steps, and focus on one card at a time. Tasks, completion status, and timer records are stored locally in your browser.
 
