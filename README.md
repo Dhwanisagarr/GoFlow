@@ -17,6 +17,10 @@ The app works as a demo without credentials. For AI-generated planning, copy `.e
 3. To enable AI planning, add `OPENAI_API_KEY` under **Project Settings → Environment Variables** for Production (and Preview if desired). Optionally add `OPENAI_MODEL`; if omitted, the app uses its configured default. Do not prefix the key with `NEXT_PUBLIC_`. Without the key, the app still deploys and uses its local demo planner.
 4. Redeploy after changing environment variables. Configure Vercel Firewall rate limiting for `POST /api/plan` before sharing a public URL; the app's in-process rate limit is not shared across serverless instances.
 
+## Vercel Web Analytics
+
+The root layout includes `@vercel/analytics/next`. Enable **Web Analytics** in the GoFlow project's Vercel dashboard under **Analytics**; Vercel starts collecting page views after the next deployment. GoFlow does not send task titles, dictated text, or custom task events to Analytics.
+
 Task cards and history stay in each visitor's browser storage. This deployment does not provide accounts, cross-device sync, server backups, or per-user data separation.
 
 ## MVP notes

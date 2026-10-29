@@ -10,6 +10,7 @@
     "test": "tsc app/lib/planner.ts --module commonjs --target es2020 --lib es2020,dom --outDir .test-build --skipLibCheck --strict && node --test app/lib/planner.test.cjs"
   },
   "dependencies": {
+    "@vercel/analytics": "^2.0.1",
     "next": "^16.4.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1"
