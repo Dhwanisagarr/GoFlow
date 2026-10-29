@@ -1,0 +1,27 @@
+{
+  "name": "one-thing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "test": "tsc app/lib/planner.ts --module commonjs --target es2020 --lib es2020,dom --outDir .test-build --skipLibCheck --strict && node --test app/lib/planner.test.cjs"
+  },
+  "dependencies": {
+    "next": "^16.4.3",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.43",
+    "@types/react": "^19.3.0",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "16.4.3",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}
