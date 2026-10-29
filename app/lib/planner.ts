@@ -12,6 +12,28 @@ export type TaskCommandResult = {
   confidence: number; needsClarification: boolean; clarification?: string; response: string; tasks: PlannerTask[];
 };
 
+/** Rebase a completed request on the newest local state, retaining timer progress and concurrent additions. */
+export function rebaseTaskResult(submitted: PlannerTask[], proposed: PlannerTask[], latest: PlannerTask[]): PlannerTask[] {
+  const submittedById = new Map(submitted.map(task => [task.id, task]));
+  const latestById = new Map(latest.map(task => [task.id, task]));
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const rebased = proposed.flatMap(candidate => {
+    const original = candidate.id ? submittedById.get(candidate.id) : undefined;
+    const current = candidate.id ? latestById.get(candidate.id) : undefined;
+    if (!original) return [current ? { ...current, ...candidate } : candidate];
+    if (!current) return [];
+    const patch: Record<string, unknown> = {};
+    for (const [field, value] of Object.entries(candidate)) {
+      if (field === 'id' || same(value, original[field as keyof PlannerTask])) continue;
+      // Keep a newer same-field write if it changed while this request was in flight.
+      if (same(current[field as keyof PlannerTask], original[field as keyof PlannerTask])) patch[field] = value;
+    }
+    return [{ ...current, ...patch }];
+  });
+  const submittedIds = new Set(submitted.map(task => task.id));
+  return [...rebased, ...latest.filter(task => !submittedIds.has(task.id))];
+}
+
 const stopWords = new Set('the a an to for from my me i we our it on at of and that this please task card item today into with get going have has had want need should must can could would like do does did is are am be been being then about off out up in by as'.split(' '));
 const normalize = (value: string) => value.toLowerCase().replace(/\bfishbowl\b/g, 'fish bowl').replace(/\bfishmarket\b/g, 'fish market').replace(/\bpaintings\b/g, 'painting').replace(/\breading\b/g, 'read').replace(/\bstudying\b/g, 'study').replace(/\bcleaning\b/g, 'clean').replace(/\bgoing\b/g, 'go').replace(/\bshopping\b/g, 'shop').replace(/\bgetting\b/g, 'get').replace(/\bdoing\b/g, 'do').replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ').trim();
 const tokens = (value: string) => normalize(value).split(' ').filter(word => word.length > 1 && !stopWords.has(word));

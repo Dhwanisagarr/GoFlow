@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { interpretTaskCommand } = require('../../.test-build/planner.js');
+const { interpretTaskCommand, rebaseTaskResult } = require('../../.test-build/planner.js');
 
 const task = (id, title, extra = {}) => ({ id, title, category: 'Focus', done: false, seconds: 42, ...extra });
 
@@ -135,4 +135,21 @@ test('consecutive edit, add, and delete instructions use the latest task state',
 
   const deleted = interpretTaskCommand('Delete fold my clothes', current, { activeTaskId: 'market' });
   assert.deepEqual(deleted.tasks.map(item => item.title), ['Go to fish market']);
+});
+
+test('rebasing a slower response preserves newer timer progress and other-tab additions', () => {
+  const submitted = [task('read', 'Read the book', { seconds: 10 })];
+  const proposed = [{ ...submitted[0], title: 'Read two chapters' }];
+  const latest = [task('read', 'Read the book', { seconds: 26 }), task('call', 'Call the dentist', { seconds: 0 })];
+
+  assert.deepEqual(rebaseTaskResult(submitted, proposed, latest), [
+    task('read', 'Read two chapters', { seconds: 26 }),
+    task('call', 'Call the dentist', { seconds: 0 }),
+  ]);
+});
+
+test('rebasing does not resurrect a task deleted while a request was in flight', () => {
+  const submitted = [task('read', 'Read the book')];
+  const proposed = [task('read', 'Read two chapters')];
+  assert.deepEqual(rebaseTaskResult(submitted, proposed, []), []);
 });
